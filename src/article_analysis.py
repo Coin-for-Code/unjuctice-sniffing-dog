@@ -1,7 +1,6 @@
 import copy
 from collections import defaultdict
 from src import *
-from textblob import TextBlob
 import spacy
 
 import requests
