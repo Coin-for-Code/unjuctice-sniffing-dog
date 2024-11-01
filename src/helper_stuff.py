@@ -1,5 +1,5 @@
 from src import log, KEY_WORDS
-from src.site_scrapping import SitesPool, NewsSite
+
 import pandas as pd
 
 
@@ -26,7 +26,7 @@ def update_table(data, path_to_table, is_excel=False):
         df.to_csv(path_to_table, index=False)
 
 
-def dilated_page_pick(batch_size: int, site_pool: SitesPool):
+def dilated_page_pick(batch_size: int, site_pool):
     """
     This will create a batch of web urls from different news sites
     :param site_pool: The pool of all sites
@@ -52,7 +52,7 @@ class OutOfArticles(Exception):
     Has a reference to the emptied news site
     """
 
-    def __init__(self, empty_site: NewsSite):
+    def __init__(self, empty_site):
         """
         :param empty_site: The news site object that has run out of articles
         """

@@ -1,9 +1,152 @@
+import copy
+
 from src import *
 from textblob import TextBlob
 import spacy
 
 import requests
 from src.site_scrapping import scrap_text_from_article
+
+NLP_MODEL = "uk_core_news_lg"
+
+CRIME_KEY_WORDS = (
+    'фінансові махінації', 'розтрата бюджетних коштів', 'підозра на корупційне діяння', 'угода', 'службове підроблення',
+    'злочинець', 'відмова у перевірці', 'відмивання активів', 'маніпуляції з податками',
+    'незаконне управління активами',
+    'незаконні витрати', 'фіктивне планування', 'протизаконна власність', 'незаконне управління коштами',
+    'неправомірне використання ресурсів', 'державні змови', 'незадекларовані активи', 'перекваліфікація',
+    'незаконний обіг коштів', 'корупційна схема', 'обвинувачення', 'державна зрада', 'підозрюється', 'корупційний',
+    'підкуп', 'розтрати', 'маніпуляції бюджетом', 'відчуження майна', 'порушення порядку декларування',
+    'порушення процедури закупівель', 'зловживання службовим становищем', 'злочин', 'отримання підозрілих коштів',
+    'отримання вигоди', 'незаконна вигода', 'зловживання довірою', 'неправомірне рішення суду',
+    'порушення правопорядку',
+    'контроль без повноважень', 'недопуск перевірки', 'порушення правил безпеки', 'фінансовий шахрай',
+    'корупційна діяльність', 'перевищення службових повноважень', 'привласнення коштів', 'несанкціоновані виплати',
+    'неправомірний дохід', 'зловживання владою', 'незаконний дохід', 'хабарництво', 'правопорушення', 'сумнівні активи',
+    'порушення закону про бюджет', 'недотримання процедури закупівель', 'махінації', 'неправомірна вигода',
+    'порушення закону', 'приховування зарплати', 'незаконне привласнення майна', 'контрабанда', 'порушив',
+    'відмивання коштів', 'приватизація', 'маніпуляції з розподілом ресурсів', 'декларування неправдивих даних',
+    'звинувачений', 'незаконна діяльність', 'відмивання державних коштів', 'фіктивне декларування доходів',
+    'місцева корупція', 'фінансове шахрайство', 'співучасть', 'зловживання іноземною допомогою',
+    'незадекларовані кошти',
+    'взято під варту', 'декларував', 'незаконна діяльність державних службовців', 'державна змова',
+    'незаконне фінансування', 'фіктивні угоди', 'службове перевищення', 'службова халатність',
+    'незаконне розподілення коштів', 'фальсифікація', 'розтрата', 'розкрадання ресурсів', 'відмивання грошей',
+    'липовий контракт', 'підроблені документи', 'ухилення від податків', 'затриманий', 'зловживання',
+    'незаконний вплив',
+    'незаконні трансакції', 'маніпуляції з бюджетом', 'розкрадання допомоги', 'приховування боргів', 'службова змова',
+    'хабар', 'розкрадання', 'обвинувачена', 'неправомірні перекази', 'підозра на хабар',
+    'застосування протиправних дій',
+    'недостовірна інформація', 'отримання відкатів', 'придбання активів', 'незаконний продаж майна',
+    'корупційні діяння',
+    'злочинна діяльність', 'хабародавство', 'незаконний прибуток', 'фіктивне підприємництво', 'приховування доходів',
+    'незаконне планування', 'фіктивні звіти', 'хабарник', 'кримінальні дії', 'порушення фінансової звітності',
+    'отримання неправомірної вигоди', 'відкат', 'обвинувачений', 'недотримання законодавства', 'підозрюваний',
+    'злочинність', 'порушення фінансової дисципліни', 'зловживання повноваженнями', 'відмив активів',
+    'розтрати державних коштів', 'неналежне витрачання бюджету', 'внесення недостовірних даних', 'незаконно',
+    'корупція',
+    'незаконний бізнес', 'протизаконне отримання коштів', 'недобросовісність', 'фіктивне інвестування', 'обхід законів',
+    'контрабанда ліків', 'відмивання капіталу', 'контрабанда зброї', 'висунення підозри', 'службова недбалість',
+    'неправомірна власність', 'комісійні', 'відмова від декларування', 'приховування активів', 'податкове шахрайство',
+    'незаконне збагачення', 'недекларування', 'підробка', 'корупційний скандал', 'державний бюджет',
+    'неправомірне рішення',
+    'незаконне використання ресурсів', 'маніпуляції з валютними операціями', 'приховування джерел доходів',
+    'незаконні дії',
+    'шахрайство', 'змова з метою привласнення', 'перевищення державних витрат', 'державні махінації',
+    'нерегламентовані кошти', 'декларація', 'розкрадання державного майна', 'прикриття активів', 'політична корупція',
+    'незаконні виплати', 'службові злочини', 'обман держави', 'фіктивні контракти', 'співпраця', 'ухилення',
+    'розкрадання державних фондів', 'фіктивні працівники', 'таємна змова', 'порушення конкурсу', 'корупціонер',
+    'затримано',
+    'незаконне розподілення ресурсів', 'недобросовісний', 'фіктивна власність', 'відмивання іноземної валюти', 'змова',
+    'посередництво', 'підозрілі контракти', 'фіктивні дані', 'перевищення дозволеного бюджету', 'збагачення',
+    'посадовець під підозрою')
+
+
+def is_same_person(person_a, person_b, nlp_model=None):
+    """
+    This function will smartly compare the two persons, to decide whatever they are the same or not. **This method is
+    prompt to errors** due:
+
+    - The acceptance level derived from experimental data,
+    - If they share common names they are considered the same person
+    :param person_a: The person to compare
+    :param person_b: The person to compare
+    :param nlp_model: Natural language processing model, loads default one, if None
+    :return: True when the persons are the same, otherwise False
+    """
+    # 0.75 is the similarity score, and is got from experimental data
+    acceptance_level = 0.75
+    if nlp_model is None:
+        nlp_model = spacy.load(NLP_MODEL)
+
+    similarity_score = nlp_model(person_a.lemma_).similarity(nlp_model(person_b.lemma_))
+    # TODO: REMOVE AFTER TESTING
+    log.debug("%s(Lem:%s) has %f similarity to %s(Lem:%s)", person_a, person_a.lemma_, similarity_score, person_b,
+              person_b.lemma_)
+
+    # If the lemmatized names are the same, it is the same guy
+    if person_a.lemma_ == person_b.lemma_:
+        return True
+    # If the level of similarity is acceptable, we consider persons to be the same
+    elif similarity_score > acceptance_level:
+        return True
+    # If the names contain the same words, very dangerous, as two people with different family names are considered one
+    elif not set(person_a.lemma_.split()).isdisjoint(set(person_b.lemma_.split())):
+        return True
+    return False
+
+
+def analysis(text):
+    context_depth = 30
+    log.debug("Analysing article with context_depth set to %d", context_depth)
+    nlp = spacy.load(NLP_MODEL)
+    analysed_text = nlp(text)
+    persons = [entity for entity in analysed_text.ents if entity.label_ == "PER"]
+    raw_persons = persons.copy()
+    log.debug("Found %d named persons", len(persons))
+
+    # TODO: Move this into a separate function, and check the O(?) of this algorithm
+    # Will remove the duplicates
+    unique_list = []
+
+    for person in persons:
+        # Check if the item is not already in unique_list using the is_equal function
+        if not any(is_same_person(person, existing_item, nlp) for existing_item in unique_list):
+            log.debug(f"Append {person}")
+            unique_list.append(person)  # Add to unique_list if not found
+        else:
+            log.debug(f"Skip {person}")
+
+    # TODO: remove this log after testing
+    log.debug("Found persons: %s\nAfter removing duplicates: %s", persons, unique_list)
+
+    return
+
+    # Check if persons are crime related
+    for person in persons:
+        context_window_beginning = max(person.start - round(context_depth / 2), 0)
+        context_window_closure = min(person.end + round(context_depth / 2), len(text))
+        context = analysed_text[context_window_beginning:context_window_closure]
+
+        # # TODO: remove this log after testing
+        # log.debug("Context for %s: %s", person, context)
+
+        # Arithmetic average
+        arith_likelihood_score = 0
+        for evaluate_word in CRIME_KEY_WORDS:
+            arith_likelihood_score += context.similarity(nlp(evaluate_word))
+        arith_likelihood_score /= len(CRIME_KEY_WORDS)
+
+        # Geometric average
+        geo_likelihood_score = 1
+        for evaluate_word in CRIME_KEY_WORDS:
+            geo_likelihood_score *= context.similarity(nlp(evaluate_word))
+        geo_likelihood_score **= 1 / len(CRIME_KEY_WORDS)
+
+        # More verbose log output
+        # log.debug("Evaluated arithmetic likelihood score: %d and geometric likelihood score: %d",
+        #           arith_likelihood_score, geo_likelihood_score)
+        log.debug("Evaluated arith/geo scores for %s: %f/%f", person, arith_likelihood_score, geo_likelihood_score)
 
 
 def is_article_on_topic(url):

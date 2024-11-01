@@ -9,7 +9,7 @@ if __name__ == '__main__':
     log.info(f"Will sniff in these places: {str(sites)}")
     batch_size_configuration = 1
     log.debug(f"Batch size set to {batch_size_configuration}")
-    log.info("Start sniffin'")
+    log.info("Begin sniffin'")
 
     # Start rounds of article analysis
     while not sites.is_empty():
