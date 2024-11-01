@@ -108,15 +108,16 @@ class ConcreteNewsSite(NewsSite):
         links = []
         is_file_available = False
         buffer_filename = "used_" + self._site_domain + "_articles.txt"
-        for filename in os.listdir(TEMP_PATH):
-            if filename == buffer_filename:
-                is_file_available = True
-                with open(os.path.join(TEMP_PATH, filename), "r") as f:
-                    for line in f.readlines():
-                        links.append(line)
+        # TODO: Ignoring save mechanisms, needs to get back it
+        # for filename in os.listdir(TEMP_PATH):
+        #     if filename == buffer_filename:
+        #         is_file_available = True
+        #         with open(os.path.join(TEMP_PATH, filename), "r") as f:
+        #             for line in f.readlines():
+        #                 links.append(line)
 
         if not is_file_available:
-            with open(os.path.join(buffer_filename, ), "w") as f:
+            with open(os.path.join("..", buffer_filename), "w") as f:
                 pass
         return links
 
@@ -125,14 +126,15 @@ class ConcreteNewsSite(NewsSite):
         is_file_available = False
         buffer_filename = "scrapped_" + self._site_domain + "_articles.txt"
 
+        # TODO: Ignoring save mechanisms, needs to get back it
         # Searching for the buffer file
-        for filename in os.listdir(TEMP_PATH):
-            if filename == buffer_filename:
-                is_file_available = True
-                log.debug("Found buffer file for scrapped articles %s", filename)
-                with open(os.path.join(TEMP_PATH, filename), "r") as f:
-                    for line in f.readlines():
-                        links.append(line)
+        # for filename in os.listdir(".."):
+        #     if filename == buffer_filename:
+        #         is_file_available = True
+        #         log.debug("Found buffer file for scrapped articles %s", filename)
+        #         with open(os.path.join(TEMP_PATH, filename), "r") as f:
+        #             for line in f.readlines():
+        #                 links.append(line)
 
         # Being scrapping for links
         if not is_file_available:
@@ -140,7 +142,7 @@ class ConcreteNewsSite(NewsSite):
             links = parse_sitemap(self._site_url)
 
             # Write the links
-            with open(buffer := os.path.join(TEMP_PATH, buffer_filename), 'w', encoding='utf-8') as f:
+            with open(buffer := os.path.join("..", buffer_filename), 'w', encoding='utf-8') as f:
                 log.debug("Writing scrapped articles into %s file", buffer)
                 for link in links:
                     f.write(f'{link}\n')
