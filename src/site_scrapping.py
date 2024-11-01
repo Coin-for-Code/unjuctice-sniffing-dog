@@ -1,19 +1,16 @@
+from src import log, TEMP_PATH
+from src.helper_stuff import OutOfArticles
+
 import os
 import requests
-import gzip
-from io import BytesIO
+
 from random import choice
 from abc import ABC, abstractmethod
-import xml.etree.ElementTree as ET
+from io import BytesIO
 import re
-import logging
+import gzip
 from bs4 import BeautifulSoup
-
-TEMP_PATH = os.path.join(".", "temp")
-LOGGER_NAME = "sillybaka"
-KEY_WORDS = []
-
-log = logging.getLogger(LOGGER_NAME)
+from xml.etree import ElementTree
 
 
 def parse_sitemap(url):
@@ -31,13 +28,13 @@ def parse_sitemap(url):
             with gzip.GzipFile(fileobj=BytesIO(response.content)) as f:
                 xml_content = f.read()
         except gzip.BadGzipFile:
-            log.error(f"Error unpacking gzip archive in a sitemap at {url}. The gzip wasn't correct or corrupted")
+            log.error("Error unpacking gzip archive in a sitemap at %s. The gzip wasn't correct or corrupted", url)
             return []
     else:
         xml_content = response.content
 
     log.debug("Parsing the content")
-    root = ET.fromstring(xml_content)
+    root = ElementTree.fromstring(xml_content)
     # Проверка типа XML (sitemap или urlset)
     if root.tag.endswith('sitemapindex'):
         # Если это индекс сайтмапов, то проходим по каждому дочернему сайтмапу
@@ -57,31 +54,21 @@ def parse_sitemap(url):
     return links
 
 
-def check_keywords_in_article(url):
+def scrap_text_from_article(url):
     """
-    Will search for keywords to filter needed articles from unrelated. Keep it stupid, but simple
-    :param url: The url of an article to check
-    :return: True if article contains the keywords, otherwise False
-    :raise RequestException: if the ``qhttp`` request is bad
+    Gets text from an article
+    :param url: The articles url
+    :return: Text inside the url
+    :raise requests.exceptions.RequestException: If http request was bad
     """
-    try:
-        # Получаем содержимое страницы
-        log.debug("Requesting the contents at %s", url)
-        response = requests.get(url)
-        response.raise_for_status()  # Проверка на ошибки HTTP
-
-        # Извлекаем текст статьи
-        soup = BeautifulSoup(response.content, 'html.parser')
-        article_text = soup.get_text().lower()  # Приводим текст к нижнему регистру
-
-        # Проверяем на совпадение с ключевыми словами
-        for keyword in KEY_WORDS:
-            if keyword.lower() in article_text:
-                return True
-    except Exception as e:
-        print(f"Ошибка при обработке {url}: {e}")
-
-    return False
+    log.debug("Requesting the contents at %s", url)
+    response = requests.get(url)
+    response.raise_for_status()
+    log.debug("Response is OK")
+    soup = BeautifulSoup(response.text, "html.parser")
+    text = soup.get_text(separator="").lower()
+    log.debug("Extracted text %d characters long", len(text))
+    return text
 
 
 class NewsSite(ABC):
@@ -93,23 +80,6 @@ class NewsSite(ABC):
     @abstractmethod
     def __str__(self):
         pass
-
-
-class EndOfProcess(Exception):
-    pass
-
-
-class OutOfArticles(Exception):
-    """
-    An exception to be raised when a news site runs out of articles.
-    Has a reference to the emptied news site
-    """
-    def __init__(self, empty_site: NewsSite):
-        """
-        :param empty_site: The news site object that has run out of articles
-        """
-        self.empty_site = empty_site
-        super().__init__()
 
 
 class ConcreteNewsSite(NewsSite):
@@ -190,3 +160,30 @@ class ConcreteNewsSite(NewsSite):
         # TODO Write used articles to a file
         self._scrapped_articles.remove(article)
         return article
+
+
+class SitesPool:
+    """Holds all the news sites"""
+
+    def __init__(self, news_sites_pool: list):
+        """List of news sites"""
+        self._news_sites_pool = news_sites_pool
+
+    def __str__(self):
+        return ", ".join([str(site) for site in self._news_sites_pool])
+
+    def remove(self, empty_news_site):
+        self._news_sites_pool.remove(empty_news_site)
+
+    def is_empty(self):
+        return len(self._news_sites_pool) == 0
+
+    def get_url(self):
+        if len(self._news_sites_pool) == 0:
+            return None
+        news_site = choice(self._news_sites_pool)
+        try:
+            return news_site.get_unique_url()
+        except OutOfArticles as signal:
+            self._news_sites_pool.remove(signal.empty_site)
+            return None
