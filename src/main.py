@@ -32,6 +32,6 @@ if __name__ == '__main__':
                 continue
 
         # TODO: Update the table with collected_data
-        path_to_table = "/".join(__file__.split("/")[:-2])+"/gov.csv"
+        path_to_table = "/".join(__file__.split("/")[:-1])+"/gov.csv"
         log.info("Writing down found bad guys into %s", path_to_table)
         serialize_small_table(collected_data, path_to_table)

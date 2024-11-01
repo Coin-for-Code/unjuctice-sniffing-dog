@@ -80,9 +80,6 @@ def is_same_person(person_a, person_b, nlp_model=None):
         nlp_model = spacy.load(NLP_MODEL)
 
     similarity_score = nlp_model(person_a.lemma_).similarity(nlp_model(person_b.lemma_))
-    # # TODO: REMOVE AFTER TESTING
-    # log.debug("%s(Lem:%s) has %f similarity to %s(Lem:%s)", person_a, person_a.lemma_, similarity_score, person_b,
-    #           person_b.lemma_)
 
     # If the lemmatized names are the same, it is the same guy
     if person_a.lemma_ == person_b.lemma_:
