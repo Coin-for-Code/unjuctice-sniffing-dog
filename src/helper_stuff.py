@@ -1,6 +1,35 @@
-from src import log, KEY_WORDS
+import os
+
+from src import log
 
 import pandas as pd
+
+
+def serialize_small_table(data, path_to_table, is_excel=False):
+    """
+
+    :param data: The data to add to the table
+    :param path_to_table: Path to the table file
+    :param is_excel: If true would load and save an Excel file
+    :return:
+    """
+    headers = ["Governors"]
+
+    table_data = None
+    # Add the data from the file
+    if os.path.isfile(path_to_table):
+        if is_excel:
+            table_data = pd.read_excel(path_to_table)
+        else:
+            table_data = pd.read_csv(path_to_table)
+
+    df = pd.DataFrame(data, columns=headers)
+    if table_data is not None:
+        df = pd.concat([table_data, df])
+    if is_excel:
+        df.to_excel(path_to_table, index=False)
+    else:
+        df.to_csv(path_to_table, index=False)
 
 
 def update_table(data, path_to_table, is_excel=False):

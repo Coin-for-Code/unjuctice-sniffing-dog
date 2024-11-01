@@ -1,5 +1,5 @@
 import copy
-
+from collections import defaultdict
 from src import *
 from textblob import TextBlob
 import spacy
@@ -80,73 +80,88 @@ def is_same_person(person_a, person_b, nlp_model=None):
         nlp_model = spacy.load(NLP_MODEL)
 
     similarity_score = nlp_model(person_a.lemma_).similarity(nlp_model(person_b.lemma_))
-    # TODO: REMOVE AFTER TESTING
-    log.debug("%s(Lem:%s) has %f similarity to %s(Lem:%s)", person_a, person_a.lemma_, similarity_score, person_b,
-              person_b.lemma_)
+    # # TODO: REMOVE AFTER TESTING
+    # log.debug("%s(Lem:%s) has %f similarity to %s(Lem:%s)", person_a, person_a.lemma_, similarity_score, person_b,
+    #           person_b.lemma_)
 
     # If the lemmatized names are the same, it is the same guy
     if person_a.lemma_ == person_b.lemma_:
         return True
-    # If the level of similarity is acceptable, we consider persons to be the same
-    elif similarity_score > acceptance_level:
-        return True
     # If the names contain the same words, very dangerous, as two people with different family names are considered one
     elif not set(person_a.lemma_.split()).isdisjoint(set(person_b.lemma_.split())):
+        return True
+    # If the level of similarity is acceptable, we consider persons to be the same
+    elif similarity_score > acceptance_level:
         return True
     return False
 
 
-def analysis(text):
-    context_depth = 30
+def identify_criminals(text):
+    context_depth = 10
     log.debug("Analysing article with context_depth set to %d", context_depth)
     nlp = spacy.load(NLP_MODEL)
     analysed_text = nlp(text)
     persons = [entity for entity in analysed_text.ents if entity.label_ == "PER"]
-    raw_persons = persons.copy()
+    # raw_persons = persons.copy()
     log.debug("Found %d named persons", len(persons))
 
     # TODO: Move this into a separate function, and check the O(?) of this algorithm
-    # Will remove the duplicates
-    unique_list = []
-
+    # Will create clean data of entities present and their context
+    collected_persons = defaultdict(list)
     for person in persons:
-        # Check if the item is not already in unique_list using the is_equal function
-        if not any(is_same_person(person, existing_item, nlp) for existing_item in unique_list):
-            log.debug(f"Append {person}")
-            unique_list.append(person)  # Add to unique_list if not found
-        else:
-            log.debug(f"Skip {person}")
-
-    # TODO: remove this log after testing
-    log.debug("Found persons: %s\nAfter removing duplicates: %s", persons, unique_list)
-
-    return
-
-    # Check if persons are crime related
-    for person in persons:
+        # Gathering context
         context_window_beginning = max(person.start - round(context_depth / 2), 0)
         context_window_closure = min(person.end + round(context_depth / 2), len(text))
         context = analysed_text[context_window_beginning:context_window_closure]
 
-        # # TODO: remove this log after testing
-        # log.debug("Context for %s: %s", person, context)
+        # Check if the item is not already in unique_list using the is_equal function
 
-        # Arithmetic average
-        arith_likelihood_score = 0
-        for evaluate_word in CRIME_KEY_WORDS:
-            arith_likelihood_score += context.similarity(nlp(evaluate_word))
-        arith_likelihood_score /= len(CRIME_KEY_WORDS)
+        temp = {}
+        for existing_persona in collected_persons.keys():
+            temp[existing_persona] = is_same_person(person, existing_persona, nlp)
 
-        # Geometric average
-        geo_likelihood_score = 1
-        for evaluate_word in CRIME_KEY_WORDS:
-            geo_likelihood_score *= context.similarity(nlp(evaluate_word))
-        geo_likelihood_score **= 1 / len(CRIME_KEY_WORDS)
+        if not any(temp.values()):
+            # In case the person is not a duplicate
+            collected_persons[person].append(context)
+        else:
+            # IN case the person has a duplicate
+            original_person = list(filter(lambda key: temp[key] is True, temp))[0]
+            collected_persons[original_person].append(context)
+
+    # Check if persons are crime related
+    corrupted_governors = []
+    for person, contexts in collected_persons.items():
+        for context in contexts:
+            if any(word in context.text.lower() for word in CRIME_KEY_WORDS):
+                corrupted_governors.append(person.text)
+                break
+
+    log.debug("Found following corrupt people: %s", corrupted_governors)
+
+    return corrupted_governors
+
+        # For better times
+        #     # Arithmetic average
+        #     context_arith_likelihood_score = 0
+        #     for evaluate_word in CRIME_KEY_WORDS:
+        #         context_arith_likelihood_score += context.similarity(nlp(evaluate_word))
+        #     context_arith_likelihood_score /= len(CRIME_KEY_WORDS)
+        #
+        #     # Geometric average
+        #     context_geo_likelihood_score = 1
+        #     for evaluate_word in CRIME_KEY_WORDS:
+        #         context_geo_likelihood_score *= context.similarity(nlp(evaluate_word))
+        #     context_geo_likelihood_score **= 1 / len(CRIME_KEY_WORDS)
+        #
+        #     arith_likelihood_score += context_arith_likelihood_score
+        #     geo_likelihood_score += context_geo_likelihood_score
+        # arith_likelihood_score /= len(contexts)
+        # geo_likelihood_score **= 1/len(contexts)
 
         # More verbose log output
         # log.debug("Evaluated arithmetic likelihood score: %d and geometric likelihood score: %d",
         #           arith_likelihood_score, geo_likelihood_score)
-        log.debug("Evaluated arith/geo scores for %s: %f/%f", person, arith_likelihood_score, geo_likelihood_score)
+        # log.debug("Evaluated arith/geo scores for %s: %f/%f", person, arith_likelihood_score, geo_likelihood_score)
 
 
 def is_article_on_topic(url):
@@ -161,7 +176,7 @@ def is_article_on_topic(url):
         article_text = scrap_text_from_article(url)
 
         # Проверяем на совпадение с ключевыми словами
-        for keyword in KEY_WORDS:
+        for keyword in TOPIC_KEYWORDS:
             if keyword.lower() in article_text:
                 log.debug("Article (%s) have right topic", url)
                 return True

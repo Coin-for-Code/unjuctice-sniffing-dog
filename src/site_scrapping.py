@@ -66,7 +66,7 @@ def scrap_text_from_article(url):
     response.raise_for_status()
     log.debug("Response is OK")
     soup = BeautifulSoup(response.text, "html.parser")
-    text = soup.get_text(separator="").lower()
+    text = soup.get_text(separator="", strip=True).lower()
     log.debug("Extracted text %d characters long", len(text))
     return text
 
