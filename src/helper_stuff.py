@@ -4,6 +4,42 @@ from src import log
 
 import pandas as pd
 
+def create_table(data, path_to_table, headers=None, is_excel=False):
+    """
+    Создает или обновляет таблицу в формате CSV или Excel на основе переданных данных.
+
+    :param data: Данные для добавления в таблицу (список списков или DataFrame).
+    :param path_to_table: Путь к файлу таблицы.
+    :param headers: Заголовки столбцов (список строк). Если None, используются индексы.
+    :param is_excel: Если True, будет загружен и сохранен файл Excel.
+    """
+    # Проверка на наличие файла и загрузка данных
+    table_data = None
+    if os.path.isfile(path_to_table):
+        if is_excel:
+            table_data = pd.read_excel(path_to_table)
+        else:
+            table_data = pd.read_csv(path_to_table)
+
+    # Создание DataFrame из переданных данных
+    if isinstance(data, pd.DataFrame):
+        df = data
+    else:
+        df = pd.DataFrame(data)
+
+    # Установка заголовков, если они не указаны
+    if headers is not None:
+        df.columns = headers
+
+    # Объединение с существующими данными, если они есть
+    if table_data is not None:
+        df = pd.concat([table_data, df], ignore_index=True)
+
+    # Сохранение данных в файл
+    if is_excel:
+        df.to_excel(path_to_table, index=False)
+    else:
+        df.to_csv(path_to_table, index=False)
 
 def serialize_small_table(data, path_to_table, is_excel=False):
     """
