@@ -5,8 +5,8 @@ LOGGER_NAME = "sillybaka"
 
 # TODO: The path for the temp folder shouldn't be hardcoded. For now changing the location of helper_stuff.py file needs
 #  special attention to change the location of the root folder
-TEMP_PATH = "/".join(__file__.split("/")[:-1])
-os.makedirs(TEMP_PATH+"/temp", exist_ok=True)
+# TEMP_PATH = "/".join(__file__.split("/")[:-1])
+# os.makedirs(TEMP_PATH+"/temp", exist_ok=True)
 # For topic filtering
 # TOPIC_KEYWORDS = (
 #     'розтрата бюджетних коштів', 'кумівство', 'привласнення', 'прозорість діяльності', 'недостовірні дані',

@@ -24,9 +24,11 @@ if __name__ == '__main__':
             try:
                 # Filter articles unrelated to governors crimes
                 if is_article_on_topic(article_url):
-                    found_criminals = identify_criminals(scrap_text_from_article(article_url))
+                    text = scrap_text_from_article(article_url)
+                    found_criminals = identify_criminals_beta(text)
+                    date = scrap_date_from_article(article_url)
                     for criminal in found_criminals:
-                        collected_data.append(criminal)
+                        collected_data.append([criminal, date, article_url])
             except Exception as e:
                 log.error("Something went wrong when analysing text on %s. Error: %s", article_url, e)
                 continue

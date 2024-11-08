@@ -1,4 +1,4 @@
-from src import log, TEMP_PATH
+from src import log
 from src.helper_stuff import OutOfArticles
 
 import os
@@ -69,6 +69,23 @@ def scrap_text_from_article(url):
     text = soup.get_text(separator="", strip=True).lower()
     log.debug("Extracted text %d characters long", len(text))
     return text
+
+
+def scrap_date_from_article(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Спроба знайти дату в тегах <time> або <meta>
+    date = soup.find("time")
+    if date and date.has_attr("datetime"):
+        return date["datetime"]
+    meta_date = soup.find("meta", {"property": "article:published_time"})
+    if meta_date and meta_date.has_attr("content"):
+        return meta_date["content"]
+    meta_date = soup.find("meta", {"property": "datePublished"})
+    if meta_date and meta_date.has_attr("content"):
+        return meta_date["content"]
+    return None
 
 
 class NewsSite(ABC):

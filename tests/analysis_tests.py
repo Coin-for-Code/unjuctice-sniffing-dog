@@ -11,5 +11,4 @@ from src.site_scrapping import scrap_text_from_article
 
 
 if __name__ == '__main__':
-
-    serialize_small_table(["Juck", "Jonh"], "/".join(__file__.split("/")[:-2])+"/test.csv")
+    pass
