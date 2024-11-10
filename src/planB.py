@@ -5,8 +5,14 @@ import requests
 import json
 import csv
 
+import spacy
+
 from src.utils import TABLE_NAME
 from src.utils import log
+from src.utils.article_analysis import is_same_person
+from src.utils.site_scrapping import scrap_text_from_article
+from src.utils import create_table
+from src.utils.site_scrapping import scrap_date_from_article
 
 url = "https://corruptinfo.nazk.gov.ua/ep/1.0/corrupt/getAllData"
 
@@ -48,14 +54,31 @@ if __name__ == '__main__':
             family_name = record["indFirstNameOnOffenseMoment"]
             papa_name = record["indPatronymicOnOffenseMoment"]
             names.append(last_name+family_name+papa_name)
+    log.info()
 
-    table = []
+    urls = []
     # Open processed file
     with open(TABLE_NAME, newline='') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
-            table.append([row[0], row[1]])
+            urls.append([row[0], row[1]])
+    log.info("Extracted all records from the gov.csv file")
 
+    processed_persons = [] # [Name, URL, Data]
+
+    for url in urls:
+        nlp = spacy.load("uk_core_news_lg")
+        analysed_text = nlp(scrap_text_from_article(url))
+        persons = [entity for entity in analysed_text.ents if entity.label_ == "PER"]
+        for person in persons:
+            for registered_criminals in names:
+                if is_same_person(person, registered_criminals):
+                    lengthmaxxing_name = registered_criminals if len(registered_criminals) > len(person) else person
+                    date = scrap_date_from_article(url)
+                    processed_persons.append([lengthmaxxing_name, url, date])
+                    break
+
+    create_table(processed_persons, os.path.join(path_to_save_dir, "table.xlsx"), True)
 
 
 
