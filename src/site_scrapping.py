@@ -72,20 +72,61 @@ def scrap_text_from_article(url):
 
 
 def scrap_date_from_article(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    """
+    Извлекает дату написания статьи с указанного URL.
+    
+    :param url: URL статьи.
+    :return: Дата написания статьи или None, если дата не найдена.
+    """
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Проверка на успешный ответ
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Спроба знайти дату в тегах <time> або <meta>
-    date = soup.find("time")
-    if date and date.has_attr("datetime"):
-        return date["datetime"]
-    meta_date = soup.find("meta", {"property": "article:published_time"})
-    if meta_date and meta_date.has_attr("content"):
-        return meta_date["content"]
-    meta_date = soup.find("meta", {"property": "datePublished"})
-    if meta_date and meta_date.has_attr("content"):
-        return meta_date["content"]
+        # 1. Поиск даты в тегах <time>
+        date = soup.find("time")
+        if date and date.has_attr("datetime"):
+            return date["datetime"]
+
+        # 2. Поиск даты в мета-тегах
+        meta_tags = [
+            {"property": "article:published_time"},
+            {"property": "datePublished"},
+            {"name": "pubdate"},
+            {"name": "date"}
+        ]
+
+        for meta in meta_tags:
+            meta_date = soup.find("meta", attrs=meta)
+            if meta_date and meta_date.has_attr("content"):
+                return meta_date["content"]
+
+        # 3. Дополнительные проверки для других возможных форматов
+        possible_dates = [
+            soup.find("span", class_="date"),  # Пример класса для даты
+            soup.find("div", class_="publish-date"),  # Пример класса для даты
+            soup.find("p", class_="date")  # Пример класса для даты
+        ]
+
+        for possible_date in possible_dates:
+            if possible_date:
+                return possible_date.get_text(strip=True)
+
+        # 4. Поиск даты в тексте статьи с помощью регулярных выражений
+        article_text = soup.get_text()
+        
+        # Регулярное выражение для поиска форматов даты (например, "10 ноября 2024" или "2024-11-10")
+        date_pattern = r'(\d{1,2}\s+[а-яА-ЯёЁ]+\s+\d{4}|\d{4}-\d{1,2}-\d{1,2})'
+        found_dates = re.findall(date_pattern, article_text)
+
+        if found_dates:
+            return found_dates[0]  # Возвращаем первую найденную дату
+
+    except requests.RequestException as e:
+        print(f"Ошибка при запросе к {url}: {e}")
+    
     return None
+
 
 
 class NewsSite(ABC):
