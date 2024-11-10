@@ -11,7 +11,7 @@ from src.utils import TABLE_NAME
 from src.utils import log
 from src.utils.article_analysis import is_same_person
 from src.utils.site_scrapping import scrap_text_from_article
-from src.utils import create_table
+from src.utils import create_excel_table
 from src.utils.site_scrapping import scrap_date_from_article
 
 url = "https://corruptinfo.nazk.gov.ua/ep/1.0/corrupt/getAllData"
@@ -78,7 +78,11 @@ if __name__ == '__main__':
                     processed_persons.append([lengthmaxxing_name, url, date])
                     break
 
-    create_table(processed_persons, os.path.join(path_to_save_dir, "table.xlsx"), True)
+    create_excel_table(path_to_table=os.path.join(path_to_save_dir, "table.xlsx"),
+                       names=processed_persons[0],
+                       url=processed_persons[1],
+                       date=processed_persons[2])
+
 
 
 
