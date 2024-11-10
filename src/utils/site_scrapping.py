@@ -84,22 +84,22 @@ def scrap_date_from_article(url):
         soup = BeautifulSoup(response.text, 'html.parser')
 
         # 1. Поиск даты в тегах <time>
-        date = soup.find("time")
-        if date and date.has_attr("datetime"):
-            return date["datetime"]
+        # date = soup.find("time")
+        # if date and date.has_attr("datetime"):
+        #     return date["datetime"]
 
         # 2. Поиск даты в мета-тегах
-        meta_tags = [
-            {"property": "article:published_time"},
-            {"property": "datePublished"},
-            {"name": "pubdate"},
-            {"name": "date"}
-        ]
+        # meta_tags = [
+        #     {"property": "article:published_time"},
+        #     {"property": "datePublished"},
+        #     {"name": "pubdate"},
+        #     {"name": "date"}
+        # ]
 
-        for meta in meta_tags:
-            meta_date = soup.find("meta", attrs=meta)
-            if meta_date and meta_date.has_attr("content"):
-                return meta_date["content"]
+        # for meta in meta_tags:
+        #     meta_date = soup.find("meta", attrs=meta)
+        #     if meta_date and meta_date.has_attr("content"):
+        #         return meta_date["content"]
 
         # 3. Дополнительные проверки для других возможных форматов
         possible_dates = [
