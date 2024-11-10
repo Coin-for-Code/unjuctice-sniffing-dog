@@ -1,5 +1,5 @@
-from src import log
-from src.helper_stuff import OutOfArticles
+from src.utils import log
+from src.utils import OutOfArticles
 
 import os
 import requests
@@ -175,7 +175,7 @@ class ConcreteNewsSite(NewsSite):
         #                 links.append(line)
 
         if not is_file_available:
-            with open(os.path.join("..", buffer_filename), "w") as f:
+            with open(os.path.join("../..", buffer_filename), "w") as f:
                 pass
         return links
 
@@ -200,7 +200,7 @@ class ConcreteNewsSite(NewsSite):
             links = parse_sitemap(self._site_url)
 
             # Write the links
-            with open(buffer := os.path.join("..", buffer_filename), 'w', encoding='utf-8') as f:
+            with open(buffer := os.path.join("../..", buffer_filename), 'w', encoding='utf-8') as f:
                 log.debug("Writing scrapped articles into %s file", buffer)
                 for link in links:
                     f.write(f'{link}\n')

@@ -1,9 +1,8 @@
-import os.path
 import sys
 
-from src.article_analysis import *
-from src.helper_stuff import *
-from src.site_scrapping import *
+from src.utils import *
+from src.utils.article_analysis import *
+from src.utils.site_scrapping import *
 
 if __name__ == '__main__':
     try:
@@ -39,7 +38,7 @@ if __name__ == '__main__':
                     date = scrap_date_from_article(article_url)
                     for criminal in found_criminals:
                         # Add columns to the data
-                        collected_data.append([criminal, date, article_url, "No description"])
+                        collected_data.append([criminal, article_url, date])
             except Exception as e:
                 log.error("Something went wrong when analysing text on %s. Error: %s", article_url, e)
                 continue
@@ -47,5 +46,8 @@ if __name__ == '__main__':
         # Finds the path to current executed file, and changes its name to 'gov.csv'.
         #  `"/"+` here is because splitting the file name removes a "/" in front
         # path_to_table = "/"+os.path.join(*(__file__.split("/")[:-1]), "gov.csv")
+
         log.info("Writing down found bad guys into %s", path_to_save_directory)
-        create_table(collected_data, os.path.join(path_to_save_directory, TABLE_SITE))
+        create_table(collected_data, os.path.join(path_to_save_directory, TABLE_NAME))
+
+

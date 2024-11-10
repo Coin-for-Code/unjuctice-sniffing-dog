@@ -1,13 +1,11 @@
-import copy
 from collections import defaultdict
-
-from bs4 import BeautifulSoup
 
 from src import *
 import spacy
-
 import requests
-from src.site_scrapping import scrap_text_from_article
+
+from src.utils import log, TOPIC_KEYWORDS
+from src.utils.site_scrapping import scrap_text_from_article
 
 NLP_MODEL = "uk_core_news_lg"
 CRIME_KEY_WORDS = (
