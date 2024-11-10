@@ -2,6 +2,7 @@ import logging
 import os
 
 LOGGER_NAME = "sillybaka"
+TABLE_SITE = "gov.csv"
 
 # TODO: The path for the temp folder shouldn't be hardcoded. For now changing the location of helper_stuff.py file needs
 #  special attention to change the location of the root folder

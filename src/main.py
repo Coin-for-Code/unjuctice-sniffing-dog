@@ -1,10 +1,21 @@
 import os.path
+import sys
 
 from src.article_analysis import *
 from src.helper_stuff import *
 from src.site_scrapping import *
 
 if __name__ == '__main__':
+    try:
+        path_to_save_directory = sys.argv[1]
+        if not os.path.exists(path_to_save_directory):
+            log.error("The path %s is not a real path", path_to_save_directory)
+            sys.exit(2)
+    except IndexError:
+        log.error("You need to provide a path to a table!")
+        sys.exit(2)
+
+    log.info("The table path is correct.")
     log.info("Woof! Ready to sniff for injustice")
     # News sites objects to collect articles from
     sites = SitesPool([ConcreteNewsSite("https://www.epravda.com.ua/sitemap.xml")])
@@ -33,7 +44,8 @@ if __name__ == '__main__':
                 log.error("Something went wrong when analysing text on %s. Error: %s", article_url, e)
                 continue
 
-        # TODO: Update the table with collected_data
-        path_to_table = "/".join(__file__.split("/")[:-1])+"/gov.csv"
-        log.info("Writing down found bad guys into %s", path_to_table)
-        create_table(collected_data, path_to_table)
+        # Finds the path to current executed file, and changes its name to 'gov.csv'.
+        #  `"/"+` here is because splitting the file name removes a "/" in front
+        # path_to_table = "/"+os.path.join(*(__file__.split("/")[:-1]), "gov.csv")
+        log.info("Writing down found bad guys into %s", path_to_save_directory)
+        create_table(collected_data, os.path.join(path_to_save_directory, TABLE_SITE))

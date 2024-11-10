@@ -25,6 +25,9 @@ def create_table(data, path_to_table, is_excel=False):
             table_data = pd.read_excel(path_to_table)
         else:
             table_data = pd.read_csv(path_to_table)
+    else:
+        with open(path_to_table, "w") as table:
+            pass
 
     # Создание DataFrame из переданных данных
     df = pd.DataFrame(data, columns=headers)
