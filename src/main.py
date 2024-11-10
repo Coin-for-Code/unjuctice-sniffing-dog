@@ -7,8 +7,7 @@ from src.site_scrapping import *
 if __name__ == '__main__':
     log.info("Woof! Ready to sniff for injustice")
     # News sites objects to collect articles from
-    sites = SitesPool([ConcreteNewsSite("https://www.epravda.com.ua/sitemap.xml"),
-                       ConcreteNewsSite("https://ua.korrespondent.net/sitemap/ua/sitemap.xml")])
+    sites = SitesPool([ConcreteNewsSite("https://www.epravda.com.ua/sitemap.xml")])
     log.info(f"Will sniff in these places: {str(sites)}")
     batch_size_configuration = 10
     log.debug(f"Batch size set to {batch_size_configuration}")
@@ -28,7 +27,8 @@ if __name__ == '__main__':
                     found_criminals = identify_criminals_beta(text)
                     date = scrap_date_from_article(article_url)
                     for criminal in found_criminals:
-                        collected_data.append([criminal, date, article_url])
+                        # Add columns to the data
+                        collected_data.append([criminal, date, article_url, "No description"])
             except Exception as e:
                 log.error("Something went wrong when analysing text on %s. Error: %s", article_url, e)
                 continue
@@ -36,4 +36,4 @@ if __name__ == '__main__':
         # TODO: Update the table with collected_data
         path_to_table = "/".join(__file__.split("/")[:-1])+"/gov.csv"
         log.info("Writing down found bad guys into %s", path_to_table)
-        serialize_small_table(collected_data, path_to_table)
+        create_table(collected_data, path_to_table)

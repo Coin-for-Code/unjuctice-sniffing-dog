@@ -4,6 +4,7 @@ from src import log
 
 import pandas as pd
 
+
 def create_table(data, path_to_table, is_excel=False):
     """
     Создает или обновляет таблицу в формате CSV или Excel на основе переданных данных.
@@ -13,7 +14,7 @@ def create_table(data, path_to_table, is_excel=False):
     :param path_to_table: Путь к файлу таблицы.
     :param is_excel: Если True, будет загружен и сохранен файл Excel.
     """
-    
+
     # Заголовки столбцов
     headers = ["Имя", "Дата", "Ссылка на статью", "Краткое описание"]
 
@@ -37,6 +38,7 @@ def create_table(data, path_to_table, is_excel=False):
         df.to_excel(path_to_table, index=False)
     else:
         df.to_csv(path_to_table, index=False)
+
 
 def serialize_small_table(data, path_to_table, is_excel=False):
     """
